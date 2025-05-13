@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import MovieList from './MovieList';
+import Layout from '../components/Layout';
 
 export default function Home() {
   const [movies, setMovies] = useState([]);
@@ -11,7 +12,7 @@ export default function Home() {
   useEffect(() => {
     async function fetchMovies() {
       try {
-        const response = await fetch(`https://mflixbackend.azurewebsites.net/api/movies?pageSize=10&page=${page}`);
+        const response = await fetch(`https://mflixbackend.azurewebsites.net/api/movies?pageSize=20&page=${page}`);
         const data = await response.json();
         setMovies(data);
         setLoading(false);
@@ -24,12 +25,32 @@ export default function Home() {
     fetchMovies();
   }, [page]);
 
+  const topMovies = [...movies]
+    .filter(movie => movie.imdb && movie.imdb.rating)
+    .sort((a,b) => b.imdb.rating - a.imdb.rating)
+    .slice(0,5);
+
   return (
+    <Layout>
     <main className="container mx-auto p-4">      
       {loading ? (
         <p>Cargando películas...</p>
       ) : (
         <>
+        <h2 className="text-lg font-semibold mb-2">🎬 Top 5 Películas según IMDb</h2>
+        <div className="grid grid-cols-5 gap-2 mb-6">
+          {topMovies.map(movie => (
+            <div key={movie._id} className="text-xs text-center">
+              <img 
+                src={movie.poster} 
+                alt={movie.title} 
+                className="w-full h-[135px] object-cover rounded-md mb-1"
+              />
+              <p className="font-bold truncate">{movie.title}</p>
+              <p className="text-yellow-500">⭐ {movie.imdb.rating}</p>
+            </div>
+          ))}
+        </div>
           <MovieList movies={movies} />
           <div className="flex justify-center items-center mt-4 space-x-4">
             <button 
@@ -50,5 +71,6 @@ export default function Home() {
         </>
       )}
     </main>
+    </Layout>
   );
 }
